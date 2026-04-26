@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Pay & Budget Calculator</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#0f0f0f;color:#e0e0e0;min-height:100vh;padding:2rem 1rem}
+.container{max-width:740px;margin:0 auto}
+h1{font-size:20px;font-weight:500;color:#fff;margin-bottom:.25rem}
+.subtitle{font-size:13px;color:#666;margin-bottom:2rem}
+.sec{font-size:11px;font-weight:500;color:#666;text-transform:uppercase;letter-spacing:.07em;margin:1.75rem 0 .6rem}
+.card{background:#161616;border:0.5px solid #272727;border-radius:10px;padding:1rem 1.25rem;margin-bottom:.75rem}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:.75rem}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:.75rem}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:.75rem}
+.scard{background:#161616;border:0.5px solid #272727;border-radius:8px;padding:.85rem;text-align:center}
+.scard .lbl{font-size:11px;color:#777;margin-bottom:4px}
+.scard .val{font-size:19px;font-weight:500;color:#fff}
+.scard .sub{font-size:11px;color:#555;margin-top:2px}
+.row{display:flex;align-items:center;gap:10px;margin-bottom:.7rem}
+.row label{font-size:13px;color:#aaa;min-width:170px;flex-shrink:0}
+.row input[type=range]{flex:1;accent-color:#4a9eff;cursor:pointer}
+.readout{font-size:13px;font-weight:500;color:#fff;min-width:70px;text-align:right}
+select,input[type=number],input[type=text]{background:#111;border:0.5px solid #333;border-radius:6px;color:#e0e0e0;font-size:13px;padding:5px 8px;outline:none}
+select:focus,input:focus{border-color:#4a9eff}
+select{cursor:pointer}
+.divider{border:none;border-top:0.5px solid #222;margin:1.25rem 0}
+.exp-row{display:grid;grid-template-columns:1fr 100px 90px 32px;gap:8px;align-items:center;margin-bottom:6px}
+.exp-row input[type=text]{width:100%}
+.exp-row input[type=number]{width:100%;text-align:right}
+.exp-note{font-size:11px;color:#555;text-align:right}
+.del-btn{background:none;border:0.5px solid #333;border-radius:5px;color:#666;cursor:pointer;font-size:14px;width:28px;height:28px;display:flex;align-items:center;justify-content:center}
+.del-btn:hover{border-color:#c0392b;color:#c0392b}
+.add-btn{background:none;border:0.5px solid #333;border-radius:6px;color:#aaa;cursor:pointer;font-size:12px;padding:5px 12px;margin-top:4px}
+.add-btn:hover{border-color:#4a9eff;color:#4a9eff}
+.tax-row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;color:#aaa;border-bottom:0.5px solid #1e1e1e}
+.tax-row:last-child{border-bottom:none;color:#fff;font-weight:500;padding-top:8px;margin-top:2px}
+.brow{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:13px;border-bottom:0.5px solid #1e1e1e}
+.brow:last-child{border-bottom:none}
+.brow .bn{color:#aaa}
+.brow .bamt{font-weight:500;color:#fff}
+.brow .bpct{font-size:11px;color:#555;margin-left:5px}
+.brow .bhrs{font-size:11px;color:#555;margin-left:8px}
+.bar-wrap{background:#1e1e1e;border-radius:6px;height:24px;overflow:hidden;position:relative;margin:6px 0 4px}
+.bar-fill{height:100%;border-radius:6px;transition:width .3s,background .3s}
+.bar-lbl{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:12px;font-weight:500;color:#fff}
+.verdict{border-radius:8px;padding:.7rem 1rem;font-size:13px;margin-top:.75rem;line-height:1.5}
+.breakeven{background:#1a1a1a;border:0.5px solid #272727;border-radius:8px;padding:.75rem 1rem;font-size:13px;color:#aaa;margin-top:.75rem}
+.breakeven span{color:#fff;font-weight:500}
+.assumptions{font-size:11px;color:#555;margin-top:1.5rem;line-height:1.7;border-top:0.5px solid #1e1e1e;padding-top:1rem}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Pay & Budget Calculator</h1>
+<p class="subtitle">Estimates only — see assumptions at bottom.</p>
+
+<div class="sec">Pay inputs</div>
+<div class="card">
+  <div class="row">
+    <label>Hourly rate</label>
+    <input type="range" id="rate" min="8" max="100" step="0.25" value="17.25">
+    <input type="number" id="rate-num" min="8" max="100" step="0.25" value="17.25" style="width:80px">
+  </div>
+  <div class="row">
+    <label>Hours / week</label>
+    <input type="range" id="hours" min="10" max="60" step="1" value="40">
+    <span class="readout" id="hours-out">40 hrs</span>
+  </div>
+  <div class="row">
+    <label>Overtime hrs / week</label>
+    <input type="range" id="ot" min="0" max="20" step="1" value="0">
+    <span class="readout" id="ot-out">0 hrs</span>
+  </div>
+  <div class="row">
+    <label>Filing status</label>
+    <select id="filing">
+      <option value="single">Single</option>
+      <option value="mfj">Married filing jointly</option>
+      <option value="hoh">Head of household</option>
+    </select>
+  </div>
+  <div class="row">
+    <label>State</label>
+    <select id="state" style="flex:1"></select>
+  </div>
+  <div class="divider"></div>
+  <div class="row">
+    <label>401k contribution</label>
+    <input type="range" id="k401" min="0" max="30" step="1" value="0">
+    <span class="readout" id="k401-out">0%</span>
+  </div>
+  <div class="row">
+    <label>Health ins. premium / mo</label>
+    <input type="number" id="health" min="0" step="1" value="0" style="width:90px">
+  </div>
+  <div class="row">
+    <label>HSA contribution / mo</label>
+    <input type="number" id="hsa" min="0" step="1" value="0" style="width:90px">
+  </div>
+</div>
+
+<div class="sec">Gross pay</div>
+<div class="grid4" id="gross-cards"></div>
+
+<div class="sec">Tax breakdown</div>
+<div class="card" id="tax-card"></div>
+
+<div class="sec">Take-home</div>
+<div class="grid3" id="net-cards"></div>
+
+<div class="sec">Overtime scenario</div>
+<div class="grid4" id="ot-cards"></div>
+
+<div class="sec">Monthly expenses</div>
+<div class="card">
+  <div style="display:grid;grid-template-columns:1fr 100px 90px 32px;gap:8px;margin-bottom:6px">
+    <span style="font-size:11px;color:#555">Name</span>
+    <span style="font-size:11px;color:#555;text-align:right">$/month</span>
+    <span style="font-size:11px;color:#555;text-align:right">hrs of work</span>
+    <span></span>
+  </div>
+  <div id="exp-list"></div>
+  <button class="add-btn" onclick="addExp()">+ Add expense</button>
+</div>
+
+<div class="sec">Budget breakdown</div>
+<div class="card" id="budget-card"></div>
+
+<div class="sec">Remainder</div>
+<div class="card">
+  <div class="bar-wrap"><div class="bar-fill" id="rem-bar"></div><span class="bar-lbl" id="rem-bar-lbl"></span></div>
+  <div id="verdict"></div>
+  <div class="breakeven" id="breakeven"></div>
+</div>
+
+<div class="assumptions" id="assumptions"></div>
+</div>
+
+<script>
+const STATE_TAXES={
+  AL:{name:'Alabama',type:'bracket',brackets:[[500,.02],[3000,.04],[Infinity,.05]]},
+  AK:{name:'Alaska',type:'flat',rate:0},
+  AZ:{name:'Arizona',type:'flat',rate:.025},
+  AR:{name:'Arkansas',type:'bracket',brackets:[[4300,.02],[8500,.04],[Infinity,.047]]},
+  CA:{name:'California',type:'bracket',brackets:[[10412,.01],[24684,.02],[39016,.04],[54081,.06],[68350,.08],[349137,.093],[418961,.103],[698274,.113],[Infinity,.123]]},
+  CO:{name:'Colorado',type:'flat',rate:.044},
+  CT:{name:'Connecticut',type:'bracket',brackets:[[10000,.03],[50000,.05],[100000,.055],[200000,.06],[250000,.065],[Infinity,.069]]},
+  DE:{name:'Delaware',type:'bracket',brackets:[[2000,0],[5000,.022],[10000,.039],[20000,.048],[25000,.052],[60000,.0555],[Infinity,.066]]},
+  FL:{name:'Florida',type:'flat',rate:0},
+  GA:{name:'Georgia',type:'flat',rate:.055},
+  HI:{name:'Hawaii',type:'bracket',brackets:[[2400,.014],[4800,.032],[9600,.055],[14400,.064],[19200,.068],[24000,.072],[36000,.076],[48000,.079],[Infinity,.09]]},
+  ID:{name:'Idaho',type:'flat',rate:.058},
+  IL:{name:'Illinois',type:'flat',rate:.0495},
+  IN:{name:'Indiana',type:'flat',rate:.0305},
+  IA:{name:'Iowa',type:'flat',rate:.06},
+  KS:{name:'Kansas',type:'bracket',brackets:[[15000,.031],[30000,.0525],[Infinity,.057]]},
+  KY:{name:'Kentucky',type:'flat',rate:.045},
+  LA:{name:'Louisiana',type:'bracket',brackets:[[12500,.0185],[50000,.035],[Infinity,.0425]]},
+  ME:{name:'Maine',type:'bracket',brackets:[[24500,.058],[58050,.0675],[Infinity,.0715]]},
+  MD:{name:'Maryland',type:'bracket',brackets:[[1000,.02],[2000,.03],[3000,.04],[100000,.0475],[125000,.05],[150000,.0525],[Infinity,.0575]]},
+  MA:{name:'Massachusetts',type:'flat',rate:.05},
+  MI:{name:'Michigan',type:'flat',rate:.0425},
+  MN:{name:'Minnesota',type:'bracket',brackets:[[30070,.0535],[98760,.068],[163060,.0785],[Infinity,.0985]]},
+  MS:{name:'Mississippi',type:'flat',rate:.05},
+  MO:{name:'Missouri',type:'bracket',brackets:[[1121,.015],[2242,.02],[3363,.025],[4484,.03],[5605,.035],[6726,.04],[7847,.045],[8968,.05],[Infinity,.054]]},
+  MT:{name:'Montana',type:'bracket',brackets:[[3600,.01],[6300,.02],[9700,.03],[13000,.04],[16800,.05],[21600,.06],[Infinity,.0675]]},
+  NE:{name:'Nebraska',type:'bracket',brackets:[[3700,.246],[22170,.351],[35730,.501],[Infinity,.584]]},
+  NV:{name:'Nevada',type:'flat',rate:0},
+  NH:{name:'New Hampshire',type:'flat',rate:0},
+  NJ:{name:'New Jersey',type:'bracket',brackets:[[20000,.014],[35000,.0175],[40000,.035],[75000,.05525],[500000,.0637],[1000000,.0897],[Infinity,.1075]]},
+  NM:{name:'New Mexico',type:'bracket',brackets:[[5500,.017],[11000,.032],[16000,.047],[210000,.049],[Infinity,.059]]},
+  NY:{name:'New York',type:'bracket',brackets:[[8500,.04],[11700,.045],[13900,.0525],[80650,.0585],[215400,.0625],[1077550,.0685],[5000000,.0965],[25000000,.103],[Infinity,.109]]},
+  NC:{name:'North Carolina',type:'flat',rate:.0475},
+  ND:{name:'North Dakota',type:'bracket',brackets:[[44725,.011],[225975,.0204],[Infinity,.029]]},
+  OH:{name:'Ohio',type:'bracket',brackets:[[26050,0],[100000,.02765],[Infinity,.0399]]},
+  OK:{name:'Oklahoma',type:'bracket',brackets:[[1000,.025],[2500,.05],[3750,.075],[4900,.0875],[7200,.0975],[Infinity,.1]]},
+  OR:{name:'Oregon',type:'bracket',brackets:[[4050,.0475],[10200,.0675],[125000,.0875],[Infinity,.099]]},
+  PA:{name:'Pennsylvania',type:'flat',rate:.0307},
+  RI:{name:'Rhode Island',type:'bracket',brackets:[[77450,.0375],[176050,.0475],[Infinity,.0599]]},
+  SC:{name:'South Carolina',type:'bracket',brackets:[[3460,0],[6440,.03],[Infinity,.065]]},
+  SD:{name:'South Dakota',type:'flat',rate:0},
+  TN:{name:'Tennessee',type:'flat',rate:0},
+  TX:{name:'Texas',type:'flat',rate:0},
+  UT:{name:'Utah',type:'flat',rate:.0465},
+  VT:{name:'Vermont',type:'bracket',brackets:[[45400,.0335],[110050,.066],[229550,.076],[Infinity,.0875]]},
+  VA:{name:'Virginia',type:'bracket',brackets:[[3000,.02],[5000,.03],[17000,.05],[Infinity,.0575]]},
+  WA:{name:'Washington',type:'flat',rate:0},
+  WV:{name:'West Virginia',type:'bracket',brackets:[[10000,.03],[25000,.04],[40000,.045],[60000,.06],[Infinity,.065]]},
+  WI:{name:'Wisconsin',type:'bracket',brackets:[[14320,.0354],[28640,.0465],[315310,.053],[Infinity,.0765]]},
+  WY:{name:'Wyoming',type:'flat',rate:0},
+  DC:{name:'Washington DC',type:'bracket',brackets:[[10000,.04],[40000,.06],[60000,.065],[250000,.085],[500000,.0925],[1000000,.1025],[Infinity,.1075]]}
+};
+
+const FILING={
+  single:{stdDed:14600,brackets:[[11600,.10],[33725,.12],[89075,.22],[190750,.24],[364200,.32],[462500,.35],[Infinity,.37]]},
+  mfj:{stdDed:29200,brackets:[[23200,.10],[67450,.12],[178150,.22],[268900,.24],[428600,.32],[644600,.35],[Infinity,.37]]},
+  hoh:{stdDed:21900,brackets:[[16550,.10],[44850,.12],[95350,.22],[182400,.24],[365400,.32],[462500,.35],[Infinity,.37]]}
+};
+
+let expenses=[
+  {name:'Rent (share)',amt:400},
+  {name:'Groceries',amt:217},
+  {name:'Gas',amt:87},
+  {name:'Debt payment',amt:25}
+];
+
+function initStateSelect(){
+  const sel=document.getElementById('state');
+  Object.entries(STATE_TAXES).sort((a,b)=>a[1].name.localeCompare(b[1].name)).forEach(([k,v])=>{
+    const o=document.createElement('option');
+    o.value=k;o.textContent=v.name+(v.rate===0&&v.type==='flat'?' (no income tax)':'');
+    if(k==='CO')o.selected=true;
+    sel.appendChild(o);
+  });
+}
+
+function calcStateTax(gross,stateKey){
+  const s=STATE_TAXES[stateKey];
+  if(!s)return 0;
+  if(s.type==='flat')return gross*s.rate;
+  let tax=0,prev=0;
+  for(const[top,r] of s.brackets){
+    if(gross<=prev)break;
+    tax+=(Math.min(gross,top)-prev)*r;
+    prev=top;
+  }
+  return tax;
+}
+
+function calcFedTax(taxable,filing){
+  const f=FILING[filing];
+  let tax=0,prev=0;
+  for(const[top,r] of f.brackets){
+    if(taxable<=prev)break;
+    tax+=(Math.min(taxable,top)-prev)*r;
+    prev=top;
+  }
+  return tax;
+}
+
+function calcFica(gross){
+  return Math.min(gross,160200)*.062+gross*.0145;
+}
+
+function fmt(n,dec=0){
+  if(n<0)return'-$'+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec});
+  return'$'+n.toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec});
+}
+function fmtR(n){return fmt(Math.round(n))}
+
+function scard(lbl,val,sub=''){
+  return`<div class="scard"><div class="lbl">${lbl}</div><div class="val">${val}</div>${sub?`<div class="sub">${sub}</div>`:''}</div>`;
+}
+
+function renderExpenses(netMonthly){
+  const el=document.getElementById('exp-list');
+  el.innerHTML='';
+  expenses.forEach((e,i)=>{
+    const hrs=netMonthly>0?(e.amt/(netMonthly/((parseFloat(document.getElementById('hours').value)+parseFloat(document.getElementById('ot').value))*52/12))).toFixed(1)+' hrs':'—';
+    const row=document.createElement('div');
+    row.className='exp-row';
+    row.innerHTML=`
+      <input type="text" value="${e.name}" onchange="expenses[${i}].name=this.value;calc()">
+      <input type="number" value="${e.amt}" min="0" step="1" onchange="expenses[${i}].amt=parseFloat(this.value)||0;calc()" style="text-align:right">
+      <span class="exp-note" style="text-align:right;font-size:12px;color:#555">${hrs}</span>
+      <button class="del-btn" onclick="expenses.splice(${i},1);calc()">×</button>
+    `;
+    el.appendChild(row);
+  });
+}
+
+function addExp(){
+  expenses.push({name:'New expense',amt:0});
+  calc();
+}
+window.addExp=addExp;
+
+function calc(){
+  const rate=parseFloat(document.getElementById('rate').value);
+  const hrs=parseInt(document.getElementById('hours').value);
+  const otHrs=parseInt(document.getElementById('ot').value);
+  const filing=document.getElementById('filing').value;
+  const stateKey=document.getElementById('state').value;
+  const k401pct=parseInt(document.getElementById('k401').value)/100;
+  const healthPremMo=parseFloat(document.getElementById('health').value)||0;
+  const hsaMo=parseFloat(document.getElementById('hsa').value)||0;
+
+  document.getElementById('hours-out').textContent=hrs+' hrs';
+  document.getElementById('ot-out').textContent=otHrs+' hrs';
+  document.getElementById('k401-out').textContent=(k401pct*100).toFixed(0)+'%';
+
+  const regHrs=Math.min(hrs,40);
+  const baseOT=Math.max(0,hrs-40);
+  const weeklyGross=regHrs*rate+baseOT*rate*1.5+otHrs*rate*1.5;
+  const yearlyGross=weeklyGross*52;
+
+  const preTaxAnnual=(healthPremMo+hsaMo)*12;
+  const k401annual=yearlyGross*k401pct;
+  const federalTaxable=Math.max(0,yearlyGross-FILING[filing].stdDed-preTaxAnnual-k401annual);
+  const stateTaxable=Math.max(0,yearlyGross-preTaxAnnual-k401annual);
+
+  const fed=calcFedTax(federalTaxable,filing);
+  const st=calcStateTax(stateTaxable,stateKey);
+  const fi=calcFica(yearlyGross);
+  const totalTax=fed+st+fi;
+  const netYearly=yearlyGross-totalTax-preTaxAnnual-k401annual;
+  const netMonthly=netYearly/12;
+  const netWeekly=netYearly/52;
+  const effRate=(totalTax/yearlyGross*100).toFixed(1);
+
+  // Gross cards
+  document.getElementById('gross-cards').innerHTML=
+    scard('Hourly',fmt(rate,2))+
+    scard('Weekly',fmtR(weeklyGross))+
+    scard('Monthly',fmtR(yearlyGross/12))+
+    scard('Yearly',fmtR(yearlyGross));
+
+  // Tax card
+  const sn=STATE_TAXES[stateKey];
+  const stLabel=sn?(sn.type==='flat'?`${sn.name} (${(sn.rate*100).toFixed(1)}% flat)`:sn.name):'State';
+  document.getElementById('tax-card').innerHTML=`
+    <div class="tax-row"><span>Federal income tax</span><span>${fmtR(fed)}/yr</span></div>
+    <div class="tax-row"><span>${stLabel}</span><span>${fmtR(st)}/yr</span></div>
+    <div class="tax-row"><span>FICA (SS + Medicare)</span><span>${fmtR(fi)}/yr</span></div>
+    ${k401annual>0?`<div class="tax-row"><span>401k contribution</span><span>${fmtR(k401annual)}/yr</span></div>`:''}
+    ${preTaxAnnual>0?`<div class="tax-row"><span>Pre-tax deductions (health/HSA)</span><span>${fmtR(preTaxAnnual)}/yr</span></div>`:''}
+    <div class="tax-row"><span>Total out — effective rate ${effRate}%</span><span>${fmtR(totalTax+preTaxAnnual+k401annual)}/yr</span></div>
+  `;
+
+  // Net cards
+  document.getElementById('net-cards').innerHTML=
+    scard('Weekly take-home',fmtR(netWeekly))+
+    scard('Monthly take-home',fmtR(netMonthly))+
+    scard('Yearly take-home',fmtR(netYearly));
+
+  // OT cards
+  const otRate=rate*1.5;
+  const weeklyWithOT=weeklyGross;
+  document.getElementById('ot-cards').innerHTML=
+    scard('OT rate',fmt(otRate,2),'1.5× base')+
+    scard('Weekly w/ OT',fmtR(weeklyWithOT))+
+    scard('Monthly w/ OT',fmtR(weeklyWithOT*52/12))+
+    scard('Yearly w/ OT',fmtR(weeklyWithOT*52));
+
+  // Expenses
+  renderExpenses(netMonthly);
+
+  const totalExp=expenses.reduce((a,e)=>a+e.amt,0);
+  const remainder=netMonthly-totalExp;
+  const pct=Math.max(0,Math.min(100,(remainder/netMonthly)*100));
+
+  // Budget breakdown
+  let bhtml='';
+  expenses.forEach(e=>{
+    const p=netMonthly>0?(e.amt/netMonthly*100).toFixed(1):0;
+    const wklyRate=rate>0?(netMonthly/((hrs+otHrs)*52/12)):0;
+    const hrsW=wklyRate>0?(e.amt/wklyRate).toFixed(1):0;
+    bhtml+=`<div class="brow"><span class="bn">${e.name}</span><span><span class="bamt">${fmtR(e.amt)}</span><span class="bpct">${p}%</span><span class="bhrs">${hrsW} hrs</span></span></div>`;
+  });
+  bhtml+=`<div class="brow" style="border-top:0.5px solid #2a2a2a;margin-top:6px;padding-top:8px"><span class="bn" style="color:#fff;font-weight:500">Total fixed</span><span><span class="bamt">${fmtR(totalExp)}</span><span class="bpct">${netMonthly>0?(totalExp/netMonthly*100).toFixed(1):0}%</span></span></div>`;
+  document.getElementById('budget-card').innerHTML=bhtml;
+
+  // Bar
+  const barColor=remainder<0?'#c0392b':remainder<200?'#e67e22':'#2e8b57';
+  document.getElementById('rem-bar').style.width=pct+'%';
+  document.getElementById('rem-bar').style.background=barColor;
+  document.getElementById('rem-bar-lbl').textContent=remainder>=0?fmtR(remainder)+'/mo':'';
+
+  // Verdict
+  let v='';
+  if(remainder<0){
+    v=`<div class="verdict" style="background:#2a1010;color:#e57373">Shortfall of ${fmtR(Math.abs(remainder))}/mo — fixed expenses exceed take-home at this rate and hours.</div>`;
+  }else if(remainder<200){
+    v=`<div class="verdict" style="background:#2a1e0a;color:#ffa726">Tight — ${fmtR(remainder)}/mo left after fixed costs. One unexpected expense wipes this out.</div>`;
+  }else{
+    v=`<div class="verdict" style="background:#0a2a12;color:#66bb6a">${fmtR(remainder)}/mo discretionary — ${pct.toFixed(0)}% of take-home unallocated.</div>`;
+  }
+  document.getElementById('verdict').innerHTML=v;
+
+  // Break-even
+  const beRate=totalExp>0?(()=>{
+    for(let r=8;r<=200;r+=.01){
+      const rHrs=Math.min(hrs,40);const rOT=Math.max(0,hrs-40)+otHrs;
+      const wg=(rHrs*r+rOT*r*1.5);const yg=wg*52;
+      const f=calcFedTax(Math.max(0,yg-FILING[filing].stdDed-preTaxAnnual-yg*k401pct),filing);
+      const s=calcStateTax(Math.max(0,yg-preTaxAnnual-yg*k401pct),stateKey);
+      const fi2=calcFica(yg);
+      const nm=(yg-f-s-fi2-preTaxAnnual-yg*k401pct)/12;
+      if(nm>=totalExp)return r;
+    }
+    return null;
+  })():null;
+
+  document.getElementById('breakeven').innerHTML=beRate
+    ?`Break-even rate: <span>${fmt(beRate,2)}/hr</span> to cover all listed expenses at ${hrs+otHrs} total hrs/week.`
+    :`Break-even: could not calculate — check expense totals.`;
+
+  // Assumptions
+  document.getElementById('assumptions').innerHTML=`
+    Assumptions: 2024 federal brackets · standard deduction ${fmt(FILING[filing].stdDed)} (${filing==='single'?'single':filing==='mfj'?'married filing jointly':'head of household'}) · FICA 6.2% SS (capped $160,200) + 1.45% Medicare · ${sn?sn.name:stateKey} state tax · 401k and health/HSA premiums treated as pre-tax · does not include local/city taxes, SUTA, or employer contributions · OT calculated at 1.5× for all hours over 40/week.
+  `;
+
+  saveState();
+}
+
+function saveState(){
+  try{
+    localStorage.setItem('pbc_state',JSON.stringify({
+      rate:document.getElementById('rate').value,
+      hours:document.getElementById('hours').value,
+      ot:document.getElementById('ot').value,
+      filing:document.getElementById('filing').value,
+      state:document.getElementById('state').value,
+      k401:document.getElementById('k401').value,
+      health:document.getElementById('health').value,
+      hsa:document.getElementById('hsa').value,
+      expenses
+    }));
+  }catch(e){}
+}
+
+function loadState(){
+  try{
+    const s=JSON.parse(localStorage.getItem('pbc_state'));
+    if(!s)return;
+    if(s.rate)document.getElementById('rate').value=s.rate,document.getElementById('rate-num').value=s.rate;
+    if(s.hours)document.getElementById('hours').value=s.hours;
+    if(s.ot)document.getElementById('ot').value=s.ot;
+    if(s.filing)document.getElementById('filing').value=s.filing;
+    if(s.state)document.getElementById('state').value=s.state;
+    if(s.k401)document.getElementById('k401').value=s.k401;
+    if(s.health)document.getElementById('health').value=s.health;
+    if(s.hsa)document.getElementById('hsa').value=s.hsa;
+    if(s.expenses)expenses=s.expenses;
+  }catch(e){}
+}
+
+// Sync rate slider <-> number input
+document.getElementById('rate').addEventListener('input',function(){
+  document.getElementById('rate-num').value=this.value;calc();
+});
+document.getElementById('rate-num').addEventListener('input',function(){
+  document.getElementById('rate').value=this.value;calc();
+});
+['hours','ot','k401'].forEach(id=>document.getElementById(id).addEventListener('input',calc));
+['filing','state','health','hsa'].forEach(id=>document.getElementById(id).addEventListener('change',calc));
+
+initStateSelect();
+loadState();
+calc();
+</script>
+</body>
+</html>
